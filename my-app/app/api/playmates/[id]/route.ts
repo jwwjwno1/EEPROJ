@@ -118,7 +118,7 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: "找不到陪玩资料。" }, { status: 404 });
   }
 
-  await prismaClient.$transaction(async (tx) => {
+  await prismaClient.$transaction(async (tx: Prisma.TransactionClient) => {
     const chargedOpenOrders = await tx.appointment.findMany({
       where: {
         playmateId: id,

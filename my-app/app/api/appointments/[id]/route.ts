@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/auth";
 import { prisma } from "../../../lib/prisma";
+import { Prisma } from "@prisma/client"
 
 const getPrisma = () => {
   if (!prisma) {
@@ -82,7 +83,7 @@ export async function PATCH(req: Request) {
         return NextResponse.json({ error: "请填写拒绝原因。" }, { status: 400 });
       }
 
-      const updated = await prismaClient.$transaction(async (tx) => {
+      const updated = await prismaClient.$transaction(async (tx: Prisma.TransactionClient) => {
         const appointmentRecord = await tx.appointment.update({
           where: { id },
           data: {
@@ -123,7 +124,7 @@ export async function PATCH(req: Request) {
       }
 
       const completedAt = new Date();
-      const updated = await prismaClient.$transaction(async (tx) => {
+      const updated = await prismaClient.$transaction(async (tx: Prisma.TransactionClient) => {
         const appointmentRecord = await tx.appointment.update({
           where: { id },
           data: {

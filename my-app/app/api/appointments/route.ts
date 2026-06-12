@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/auth";
 import { getLateFee, getOrderCoins } from "@/app/lib/coins";
 import { prisma } from "../../lib/prisma";
+import { Prisma } from "@prisma/client"
 
 const getPrisma = () => {
   if (!prisma) {
@@ -140,7 +141,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const created = await prismaClient.$transaction(async (tx) => {
+  const created = await prismaClient.$transaction(async (tx: Prisma.TransactionClient) => {
     const appointmentRecord = await tx.appointment.create({
       data: {
         userId: user.id,
