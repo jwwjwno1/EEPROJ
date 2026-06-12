@@ -1,0 +1,20 @@
+[browser] ⨯ unhandledRejection: SyntaxError: Failed to execute 'json' on 'Response': Unexpected end of JSON input
+    at loadPlaymates (app/playmate/page.tsx:212:26)
+  210 | const loadPlaymates = async () => {
+  211 |   const res = await fetch("/api/playmates", { cache: "no-store" });
+> 212 |   const data = await res.json();
+      |                          ^
+  213 |
+  214 |   if (!res.ok) {
+  215 |     return [];
+[browser] ⨯ unhandledRejection: SyntaxError: Failed to execute 'json' on 'Response': Unexpected end of JSON input
+    at PlaymatePage.useEffect.syncCoins (app/playmate/page.tsx:311:30)
+  309 |
+  310 |       const res = await fetch("/api/wallet", { cache: "no-store" });
+> 311 |       const data = await res.json();
+      |                              ^
+  312 |
+  313 |       if (res.ok) {
+  314 |         setCoinBalance(Number(data.coinBalance ?? 0));
+[browser] Image with src "/uploads/9e68ea71-2649-4133-b1bc-2af4bc0c3e8a.png" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading

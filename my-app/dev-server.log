@@ -1,0 +1,32 @@
+
+> my-app@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.173:3000
+- Environments: .env
+✓ Ready in 505ms
+Creating turbopack project { dir: 'C:\\Users\\A\\Downloads\\eeproj\\my-app', testMode: true }
+
+ GET / 200 in 1067ms (next.js: 555ms, application-code: 513ms)
+ GET /playmate 200 in 1090ms (next.js: 772ms, application-code: 318ms)
+ GET /playmate 200 in 1079ms (next.js: 781ms, application-code: 298ms)
+ GET /playmate 200 in 154ms (next.js: 14ms, application-code: 140ms)
+ GET /api/auth/session 200 in 607ms (next.js: 590ms, application-code: 17ms)
+ GET /api/auth/session 200 in 1041ms (next.js: 1018ms, application-code: 23ms)
+ GET /api/auth/session 200 in 98ms (next.js: 14ms, application-code: 84ms)
+ GET /api/playmates 200 in 968ms (next.js: 39ms, application-code: 929ms)
+ GET /api/playmates 200 in 788ms (next.js: 5ms, application-code: 783ms)
+ GET /api/auth/session 200 in 33ms (next.js: 14ms, application-code: 19ms)
+ GET /api/playmates/me 200 in 127ms (next.js: 9ms, application-code: 119ms)
+ GET /api/wallet 200 in 142ms (next.js: 7ms, application-code: 135ms)
+ GET /api/playmates 200 in 849ms (next.js: 4ms, application-code: 845ms)
+ GET /api/auth/session 200 in 19ms (next.js: 3ms, application-code: 16ms)
+ GET /api/wallet 200 in 121ms (next.js: 3ms, application-code: 118ms)
+ GET /api/playmates/me 200 in 126ms (next.js: 4ms, application-code: 123ms)
+ GET /api/wallet 200 in 157ms (next.js: 4ms, application-code: 153ms)
+ GET /api/auth/session 200 in 69ms (next.js: 3ms, application-code: 66ms)
+ GET /api/playmates/me 200 in 2.2s (next.js: 66ms, application-code: 2.1s)
+ GET /api/wallet 200 in 2.2s (next.js: 31ms, application-code: 2.2s)
+ GET /api/wallet 200 in 2.1s (next.js: 7ms, application-code: 2.1s)

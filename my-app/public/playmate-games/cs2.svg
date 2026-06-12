@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="480" viewBox="0 0 800 480">
+  <rect width="800" height="480" fill="#080808"/>
+  <path d="M110 110h580v260H110z" fill="#171717" stroke="#f59e0b" stroke-width="8"/>
+  <path d="M250 240h300M420 170l130 70-130 70" stroke="#f59e0b" stroke-width="34" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <text x="400" y="414" fill="#ffffff" font-family="Arial" font-size="64" font-weight="700" text-anchor="middle">CS2</text>
+</svg>

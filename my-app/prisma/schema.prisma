@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id          Int      @id @default(autoincrement())
+  discordId   String   @unique
+  discordName String
+  avatar      String?
+  role        String   @default("user")
+  coinBalance Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  appointments Appointment[]
+  gifts        GiftRecord[]
+  rechargeRequests CoinRechargeRequest[]
+}
+
+model Playmate {
+  id          Int      @id @default(autoincrement())
+  name        String
+  game        String
+  price       Int
+  role        String   @default("娱乐陪玩")
+  description String
+  image       String?
+  discordId   String?  @unique
+  coinBalance Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  appointments Appointment[]
+  gifts        GiftRecord[]
+  transactions PlaymateCoinTransaction[]
+}
+
+model Appointment {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  playmateId  Int
+  appointment DateTime
+  duration    Int
+  status      String   @default("pending")
+  coinCost    Int      @default(0)
+  lateFee     Int      @default(0)
+  chargedAt   DateTime?
+  acceptedAt  DateTime?
+  rating      Int?
+  ratingComment String?
+  rejectReason String?
+  rejectedAt  DateTime?
+  proofImage  String?
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id])
+  playmate  Playmate  @relation(fields: [playmateId], references: [id])
+}
+
+model GiftRecord {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  playmateId  Int
+  giftName    String
+  coinCost    Int
+  createdAt   DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id])
+  playmate  Playmate  @relation(fields: [playmateId], references: [id])
+}
+
+model PlaymateCoinTransaction {
+  id          Int      @id @default(autoincrement())
+  playmateId  Int
+  amount      Int
+  type        String
+  note        String?
+  appointmentId Int?
+  giftId      Int?
+  createdAt   DateTime @default(now())
+
+  playmate  Playmate  @relation(fields: [playmateId], references: [id])
+}
+
+model CoinRechargeRequest {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  amount       Int
+  transferName String
+  status       String   @default("pending")
+  reviewedBy   String?
+  reviewedAt   DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}

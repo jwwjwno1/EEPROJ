@@ -1,0 +1,1 @@
+ALTER TABLE "Playmate" ADD COLUMN "role" TEXT NOT NULL DEFAULT '娱乐陪玩';

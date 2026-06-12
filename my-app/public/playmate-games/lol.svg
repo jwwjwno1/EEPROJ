@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="480" viewBox="0 0 800 480">
+  <rect width="800" height="480" fill="#05070c"/>
+  <circle cx="400" cy="210" r="150" fill="#111827" stroke="#c8aa6e" stroke-width="10"/>
+  <path d="M320 105h76v210h120v62H320z" fill="#c8aa6e"/>
+  <text x="400" y="414" fill="#ffffff" font-family="Arial" font-size="46" font-weight="700" text-anchor="middle">LEAGUE OF LEGENDS</text>
+</svg>

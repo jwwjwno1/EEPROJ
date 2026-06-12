@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="480" viewBox="0 0 800 480">
+  <rect width="800" height="480" fill="#09090b"/>
+  <path d="M400 70l205 320H195z" fill="#1f1111" stroke="#ef4444" stroke-width="10"/>
+  <path d="M400 135l72 145H328z" fill="#ef4444"/>
+  <text x="400" y="414" fill="#ffffff" font-family="Arial" font-size="58" font-weight="700" text-anchor="middle">APEX LEGENDS</text>
+</svg>
