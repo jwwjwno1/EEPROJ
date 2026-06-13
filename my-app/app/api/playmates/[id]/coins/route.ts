@@ -31,7 +31,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "扣除后陪玩金币不能低于 0。" }, { status: 400 });
   }
 
-  const updated = await prisma.$transaction(async (tx) => {
+  const updated = await prisma.$transaction(async (tx: any) => {
     const updatedPlaymate = await tx.playmate.update({
       where: { id },
       data: { coinBalance: { increment: amount } },

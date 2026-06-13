@@ -37,7 +37,7 @@ export async function PATCH(req: Request) {
 
   const status = action === "approve" ? "approved" : "rejected";
 
-  const updated = await prisma.$transaction(async (tx) => {
+  const updated = await prisma.$transaction(async (tx: any) => {
     const rechargeRequest = await tx.coinRechargeRequest.update({
       where: { id },
       data: {

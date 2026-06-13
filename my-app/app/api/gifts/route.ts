@@ -6,12 +6,22 @@ import { prisma } from "@/app/lib/prisma";
 
 export async function GET() {
   if (!prisma) {
-    return NextResponse.json({ error: "DATABASE_URL 尚未设置。" }, { status: 500 });
+    return NextResponse.json(
+      { error: "DATABASE_URL 尚未设置。" },
+      { status: 500 }
+    );
   }
 
   const session = await getServerSession(authOptions);
-  if (!session?.user?.discordId || !ADMIN_DISCORD_IDS.includes(session.user.discordId)) {
-    return NextResponse.json({ error: "只有管理员可以查看礼物记录。" }, { status: 403 });
+
+  if (
+    !session?.user?.discordId ||
+    !ADMIN_DISCORD_IDS.includes(session.user.discordId)
+  ) {
+    return NextResponse.json(
+      { error: "只有管理员可以查看礼物记录。" },
+      { status: 403 }
+    );
   }
 
   const gifts = await prisma.giftRecord.findMany({
@@ -24,21 +34,38 @@ export async function GET() {
 
 export async function POST(req: Request) {
   if (!prisma) {
-    return NextResponse.json({ error: "DATABASE_URL 尚未设置。" }, { status: 500 });
+    return NextResponse.json(
+      { error: "DATABASE_URL 尚未设置。" },
+      { status: 500 }
+    );
   }
 
   const session = await getServerSession(authOptions);
   if (!session?.user?.discordId) {
-    return NextResponse.json({ error: "请先使用 Discord 登录。" }, { status: 401 });
+    return NextResponse.json(
+      { error: "请先使用 Discord 登录。" },
+      { status: 401 }
+    );
   }
 
-  const body = await req.json();
+  const body = await req.json().catch(() => null);
+  if (!body) {
+    return NextResponse.json(
+      { error: "请求数据格式错误。" },
+      { status: 400 }
+    );
+  }
+
   const playmateId = Number(body.playmateId);
   const giftName = String(body.giftName ?? "").trim();
-  const gift = giftOptions.find((option) => option.name === giftName);
 
-  if (!playmateId || !gift) {
-    return NextResponse.json({ error: "请选择有效的陪玩和礼物。" }, { status: 400 });
+  const gift = giftOptions.find((g) => g.name === giftName);
+
+  if (!Number.isInteger(playmateId) || !gift) {
+    return NextResponse.json(
+      { error: "请选择有效的陪玩和礼物。" },
+      { status: 400 }
+    );
   }
 
   const user = await prisma.user.findUnique({
@@ -46,18 +73,29 @@ export async function POST(req: Request) {
   });
 
   if (!user) {
-    return NextResponse.json({ error: "找不到 Discord 用户资料。" }, { status: 404 });
+    return NextResponse.json(
+      { error: "找不到 Discord 用户资料。" },
+      { status: 404 }
+    );
   }
 
-  const playmate = await prisma.playmate.findUnique({ where: { id: playmateId } });
+  const playmate = await prisma.playmate.findUnique({
+    where: { id: playmateId },
+  });
+
   if (!playmate) {
-    return NextResponse.json({ error: "找不到陪玩资料。" }, { status: 404 });
+    return NextResponse.json(
+      { error: "找不到陪玩资料。" },
+      { status: 404 }
+    );
   }
 
   if (user.coinBalance < gift.coinCost) {
     return NextResponse.json(
-      { error: `金币不足，${gift.name} 需要 ${gift.coinCost} 金币，当前只有 ${user.coinBalance} 金币。` },
-      { status: 400 },
+      {
+        error: `金币不足，${gift.name} 需要 ${gift.coinCost} 金币，当前只有 ${user.coinBalance} 金币。`,
+      },
+      { status: 400 }
     );
   }
 
@@ -74,13 +112,21 @@ export async function POST(req: Request) {
 
     const updatedUser = await tx.user.update({
       where: { id: user.id },
-      data: { coinBalance: { decrement: gift.coinCost } },
+      data: {
+        coinBalance: {
+          decrement: gift.coinCost,
+        },
+      },
       select: { coinBalance: true },
     });
 
     await tx.playmate.update({
       where: { id: playmateId },
-      data: { coinBalance: { increment: gift.coinCost } },
+      data: {
+        coinBalance: {
+          increment: gift.coinCost,
+        },
+      },
     });
 
     await tx.playmateCoinTransaction.create({
@@ -93,7 +139,10 @@ export async function POST(req: Request) {
       },
     });
 
-    return { giftRecord, coinBalance: updatedUser.coinBalance };
+    return {
+      giftRecord,
+      coinBalance: updatedUser.coinBalance,
+    };
   });
 
   return NextResponse.json(result);
