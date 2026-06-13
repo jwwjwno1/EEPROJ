@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { Prisma } from "@prisma/client";
 
 import { ADMIN_DISCORD_IDS, authOptions } from "@/app/lib/auth";
 import { prisma } from "../../lib/prisma";
@@ -10,22 +9,24 @@ const getPrisma = () => {
 };
 
 const getPlaymateSaveError = (error: unknown) => {
-  if (error instanceof Prisma.PrismaClientKnownRequestError) {
-    if (error.code === "P2002") {
-      return "这个 Discord ID 已经绑定到其他陪玩资料。";
-    }
+  const err = error as any;
 
-    return `无法保存陪玩资料。Prisma ${error.code}: ${error.message}`;
+  // Prisma unique constraint error (P2002)
+  if (err?.code === "P2002") {
+    return "这个 Discord ID 已经绑定到其他陪玩资料。";
   }
 
-  if (error instanceof Prisma.PrismaClientValidationError) {
-    return `无法保存陪玩资料。Prisma validation: ${error.message}`;
+  // Prisma validation error (best-effort check)
+  if (err?.name === "PrismaClientValidationError") {
+    return `无法保存陪玩资料。Prisma validation: ${err.message}`;
   }
 
+  // Normal JS error
   if (error instanceof Error) {
     return `无法保存陪玩资料。${error.message}`;
   }
 
+  // fallback
   return "无法保存陪玩资料。";
 };
 
