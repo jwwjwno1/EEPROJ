@@ -172,7 +172,7 @@ export default function Navbar() {
             priority
             className="h-10 w-10 rounded-lg object-contain"
           />
-          <h1 className="text-xl font-bold">EE Studio</h1>
+          <h1 className="text-xl font-bold">𝓔𝓔.𝓼𝓽𝓾𝓭𝓲𝓸</h1>
         </div>
 
         <nav className="hidden items-center gap-6 text-sm md:flex">
