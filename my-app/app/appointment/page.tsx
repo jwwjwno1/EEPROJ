@@ -202,7 +202,7 @@ export default function AppointmentPage() {
 
       <video
         className="absolute inset-0 -z-20 h-full w-full object-cover opacity-35"
-        src="/image/金幣雨.mp4"
+        src="/image/coin-rain.mp4"
         autoPlay
         muted
         loop

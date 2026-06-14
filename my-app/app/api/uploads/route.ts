@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "crypto";
 
+export const runtime = "nodejs";
+
 const allowedTypes = new Set([
   "image/jpeg",
   "image/png",
@@ -10,12 +12,40 @@ const allowedTypes = new Set([
 ]);
 
 const maxFileSize = 5 * 1024 * 1024;
+const uploadBucket = process.env.SUPABASE_UPLOAD_BUCKET ?? "uploads";
 
-// Supabase client（server side）
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const extensionByType: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/gif": "gif",
+};
+
+const getSupabaseClient = () => {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    const missingKeys = [
+      !supabaseUrl && "NEXT_PUBLIC_SUPABASE_URL",
+      !serviceRoleKey && "SUPABASE_SERVICE_ROLE_KEY",
+    ].filter(Boolean);
+
+    throw new Error(
+      `Missing Supabase upload env vars: ${missingKeys.join(", ")}. Set them in Vercel and redeploy.`,
+    );
+  }
+
+  return createClient(supabaseUrl, serviceRoleKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+};
+
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : "Upload failed";
 
 export async function POST(req: Request) {
   try {
@@ -43,15 +73,17 @@ export async function POST(req: Request) {
       );
     }
 
-    const extension = file.name.split(".").pop() || "jpg";
+    const supabase = getSupabaseClient();
+    const extension = extensionByType[file.type] ?? "jpg";
     const filename = `${randomUUID()}.${extension}`;
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
     const { error } = await supabase.storage
-      .from("uploads")
+      .from(uploadBucket)
       .upload(filename, buffer, {
         contentType: file.type,
+        cacheControl: "31536000",
         upsert: false,
       });
 
@@ -63,15 +95,15 @@ export async function POST(req: Request) {
     }
 
     const { data } = supabase.storage
-      .from("uploads")
+      .from(uploadBucket)
       .getPublicUrl(filename);
 
     return NextResponse.json({
       url: data.publicUrl,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json(
-      { error: err?.message || "Upload failed" },
+      { error: getErrorMessage(err) },
       { status: 500 }
     );
   }

@@ -734,7 +734,7 @@ export default function PlaymatePage() {
       <div className="pointer-events-none fixed inset-0 z-0">
         <video
           className="h-full w-full object-cover opacity-45"
-          src="/image/陪玩大厅页面.mp4"
+          src="/image/playmate-lobby.mp4"
           autoPlay
           muted
           loop
