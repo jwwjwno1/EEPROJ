@@ -167,7 +167,8 @@ export default function GiftsPage() {
                     src={playmate.image as string}
                     alt={playmate.name}
                     fill
-                    sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
+                    sizes="(min-width: 1280px) 420px, (min-width: 768px) 50vw, 100vw"
+                    quality={100}
                     unoptimized={playmate.image?.startsWith("http")}
                     className="object-cover"
                   />

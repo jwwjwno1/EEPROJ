@@ -85,6 +85,7 @@ export default async function LeaderboardPage() {
                     alt={playmate.name}
                     fill
                     sizes="80px"
+                    quality={100}
                     unoptimized={playmate.image?.startsWith("http")}
                     className="object-cover"
                   />

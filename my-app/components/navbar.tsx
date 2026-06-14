@@ -164,9 +164,14 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 border-b border-zinc-800 bg-black text-white">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white font-bold text-black">
-            EE
-          </div>
+          <Image
+            src="/image/logo.png"
+            alt="EE Studio"
+            width={40}
+            height={40}
+            priority
+            className="h-10 w-10 rounded-lg object-contain"
+          />
           <h1 className="text-xl font-bold">EE Studio</h1>
         </div>
 

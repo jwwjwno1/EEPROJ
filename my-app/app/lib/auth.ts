@@ -9,7 +9,7 @@ type DiscordProfile = {
   avatar?: string | null;
 };
 
-export const ADMIN_DISCORD_IDS = ["1366210880525701182"];
+export const ADMIN_DISCORD_IDS = ["1366210880525701182", "402793103670640640"];
 
 const getDiscordAvatarUrl = (discordId?: string, avatar?: string | null) => {
   if (!discordId || !avatar) {

@@ -103,16 +103,20 @@ const gameCards: GameCard[] = [
   },
   {
     name: "Other Games",
-    image: "/playmate-games/other.svg",
+    image: "/image/Apex.jpg",
   },
-  ...serviceCategories.map((name) => ({
-    name,
-    image: "/playmate-games/other.svg",
-  })),
+  { name: "陪玩", image: "/image/Valorant.jpg" },
+  { name: "代肝", image: "/image/代肝.png" },
+  { name: "教学单", image: "/image/League%20of%20Legends.jpg" },
+  { name: "陪聊", image: "/image/陪聊.png" },
+  { name: "哄睡", image: "/image/哄睡.png" },
+  { name: "唱歌", image: "/image/唱歌.png" },
+  { name: "语音聊天", image: "/image/打字陪伴.png" },
+  { name: "陪看电影", image: "/image/陪看電影.png" },
 ];
 
 const gameOptions = ["Valorant", "CS2", "League of Legends", "Apex Legends", ...serviceCategories, "其他游戏"];
-const adminDiscordIds = ["1366210880525701182"];
+const adminDiscordIds = ["1366210880525701182", "402793103670640640"];
 const genderOptions: GenderPreference[] = ["随机", "男生", "女生"];
 const playmateRoleOptions: PlaymateRole[] = ["娱乐陪玩", "技术陪玩"];
 
@@ -984,6 +988,7 @@ export default function PlaymatePage() {
                                   alt={playmate.name}
                                   fill
                                   sizes="64px"
+                                  quality={100}
                                   unoptimized={playmate.image?.startsWith("http")}
                                   className="object-cover"
                                 />
@@ -1239,7 +1244,8 @@ export default function PlaymatePage() {
                         src={playmate.image as string}
                         alt={playmate.name}
                         fill
-                        sizes="(min-width: 768px) 33vw, 100vw"
+                        sizes="(min-width: 1280px) 420px, (min-width: 768px) 50vw, 100vw"
+                        quality={100}
                         unoptimized={playmate.image?.startsWith("http")}
                         className="object-cover"
                       />
@@ -1408,6 +1414,7 @@ export default function PlaymatePage() {
                         alt="陪玩图片预览"
                         fill
                         sizes="144px"
+                        quality={100}
                         unoptimized={form.image.startsWith("http")}
                         className="object-cover"
                       />

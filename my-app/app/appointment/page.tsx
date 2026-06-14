@@ -197,10 +197,20 @@ export default function AppointmentPage() {
   };
 
   return (
-    <main className="min-h-screen bg-black text-white">
+    <main className="relative isolate min-h-screen overflow-hidden bg-black text-white">
       <Navbar />
 
-      <div className="mx-auto max-w-6xl px-6 py-12">
+      <video
+        className="absolute inset-0 -z-20 h-full w-full object-cover opacity-35"
+        src="/image/金幣雨.mp4"
+        autoPlay
+        muted
+        loop
+        playsInline
+      />
+      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_bottom,rgba(0,0,0,0.72),rgba(0,0,0,0.9)_46%,#000)]" />
+
+      <div className="relative z-10 mx-auto max-w-6xl px-6 py-12">
         <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-cyan-300">
@@ -347,7 +357,8 @@ export default function AppointmentPage() {
                         src={playmate.image as string}
                         alt={playmate.name}
                         fill
-                        sizes="(min-width: 768px) 33vw, 100vw"
+                        sizes="(min-width: 1280px) 360px, (min-width: 768px) 33vw, 100vw"
+                        quality={100}
                         unoptimized={playmate.image?.startsWith("http")}
                         className="object-cover"
                       />
