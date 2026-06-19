@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { Prisma } from "@prisma/client";
 import { ADMIN_DISCORD_IDS, authOptions } from "@/app/lib/auth";
 import { prisma } from "../../../lib/prisma";
 
@@ -91,7 +92,7 @@ export async function PUT(req: Request) {
     price: parsedPrice,
     description: parsedDescription,
     image: String(image ?? "").trim() || null,
-    ranks: parsedRanks.length > 0 ? parsedRanks : null,
+    ranks: parsedRanks.length > 0 ? parsedRanks : Prisma.JsonNull,
     ...(hasRole ? { role: parsedRole } : {}),
     ...(Object.prototype.hasOwnProperty.call(body, "discordId")
       ? { discordId: String(discordId ?? "").trim() || null }

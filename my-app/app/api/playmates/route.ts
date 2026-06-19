@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { Prisma } from "@prisma/client";
 
 import { ADMIN_DISCORD_IDS, authOptions } from "@/app/lib/auth";
 import { prisma } from "../../lib/prisma";
@@ -154,7 +155,7 @@ export async function POST(req: Request) {
         role,
         description,
         image: image || null,
-        ranks: ranks.length > 0 ? ranks : null,
+        ranks: ranks.length > 0 ? ranks : Prisma.JsonNull,
         discordId: discordId || null,
       },
     });
