@@ -3,7 +3,15 @@
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Navbar from "@/components/navbar";
+import { ADMIN_DISCORD_IDS } from "@/app/lib/auth";
 import { signIn, useSession } from "next-auth/react";
+
+type RankOption = {
+  key?: string;
+  name: string;
+  price: number;
+  description?: string;
+};
 
 type Playmate = {
   id: number;
@@ -13,9 +21,10 @@ type Playmate = {
   role: PlaymateRole;
   description: string;
   image?: string | null;
+  ranks?: RankOption[];
 };
 
-type PlaymateRole = "技术陪玩" | "娱乐陪玩";
+type PlaymateRole = "技术陪玩" | "娱乐陪玩" | "段位";
 
 type FormState = {
   name: string;
@@ -24,6 +33,10 @@ type FormState = {
   role: PlaymateRole;
   description: string;
   image: string;
+  ranks: RankOption[];
+  newRankName: string;
+  newRankPrice: string;
+  newRankDescription: string;
 };
 
 type GameCard = {
@@ -42,6 +55,7 @@ type QuickOrderState = {
   minutes: number;
   startTime: string;
   note: string;
+  rankKey: string;
 };
 
 type OrderStage = "填写订单" | "接单大厅" | "老板选择" | "付款" | "服务中" | "订单结束";
@@ -70,6 +84,10 @@ const initialFormState: FormState = {
   role: "娱乐陪玩",
   description: "",
   image: "",
+  ranks: [],
+  newRankName: "",
+  newRankPrice: "",
+  newRankDescription: "",
 };
 
 const initialQuickOrder: QuickOrderState = {
@@ -80,6 +98,7 @@ const initialQuickOrder: QuickOrderState = {
   minutes: 30,
   startTime: "",
   note: "",
+  rankKey: "",
 };
 
 const serviceCategories = ["代肝", "陪聊", "唱歌", "语音聊天"];
@@ -108,9 +127,8 @@ const gameCards: GameCard[] = [
 ];
 
 const gameOptions = ["Valorant", "CS2", "League of Legends", "Apex Legends", ...serviceCategories];
-const adminDiscordIds = ["1366210880525701182", "402793103670640640"];
 const genderOptions: GenderPreference[] = ["随机", "男生", "女生"];
-const playmateRoleOptions: PlaymateRole[] = ["娱乐陪玩", "技术陪玩"];
+const playmateRoleOptions: PlaymateRole[] = ["娱乐陪玩", "技术陪玩", "段位"];
 
 const applicants: Applicant[] = [
   {
@@ -164,16 +182,20 @@ const darkButton =
 const fieldClass =
   "min-h-11 rounded-lg border border-zinc-700 bg-black px-4 text-white outline-none transition placeholder:text-zinc-500 focus:border-cyan-300";
 
-const getQuickOrderPrice = (order: QuickOrderState) => {
-  const hourlyPrice = order.mode === "娱乐陪" ? 25 : 45;
+const getQuickOrderPrice = (order: QuickOrderState, selectedRankPrice: number | null) => {
   const startDate = order.startTime ? new Date(order.startTime) : null;
   const startHour = startDate?.getHours() ?? 0;
   const startMinute = startDate?.getMinutes() ?? 0;
   const nightFee = startHour > 23 || (startHour === 23 && startMinute >= 30) ? 5 : 0;
-  const basePrice = hourlyPrice * (order.minutes / 60);
+  const basePrice =
+    order.mode === "技术陪"
+      ? selectedRankPrice !== null
+        ? Math.max(1, Math.ceil(selectedRankPrice * Math.max(1, Math.ceil(order.minutes / 30))))
+        : 0
+      : 25 * (order.minutes / 60);
 
   return {
-    hourlyPrice,
+    hourlyPrice: order.mode === "娱乐陪" ? 25 : selectedRankPrice ?? 45,
     basePrice,
     nightFee,
     total: basePrice + nightFee,
@@ -182,7 +204,7 @@ const getQuickOrderPrice = (order: QuickOrderState) => {
 };
 
 const getPlaymateOrderCoins = (playmate: Playmate, minutes: number) =>
-  playmate.role === "技术陪玩"
+  playmate.role === "技术陪玩" || playmate.role === "段位"
     ? Math.max(1, Math.ceil(playmate.price * Math.max(1, Math.ceil(minutes / 30))))
     : Math.max(1, Math.ceil(playmate.price * (minutes / 60)));
 
@@ -272,10 +294,30 @@ export default function PlaymatePage() {
   const [reviewText, setReviewText] = useState("");
   const [proofUploaded, setProofUploaded] = useState(false);
   const isAdmin = Boolean(
-    session?.user?.discordId && adminDiscordIds.includes(session.user.discordId),
+    session?.user?.discordId && ADMIN_DISCORD_IDS.includes(session.user.discordId),
   );
 
-  const quickOrderPrice = useMemo(() => getQuickOrderPrice(quickOrder), [quickOrder]);
+  const rankOptions = useMemo(() => {
+    const ranks = playmates.flatMap((playmate) => playmate.ranks ?? []);
+    const uniqueRanks: Record<string, RankOption> = {};
+    for (const rank of ranks) {
+      const key = `${rank.name}__${rank.price}__${rank.description ?? ""}`;
+      if (!uniqueRanks[key]) {
+        uniqueRanks[key] = { ...rank, key };
+      }
+    }
+    return Object.values(uniqueRanks).sort((a, b) => a.price - b.price || a.name.localeCompare(b.name));
+  }, [playmates]);
+
+  const selectedRankPrice = useMemo(() => {
+    const selectedRank = rankOptions.find((rank) => rank.key === quickOrder.rankKey);
+    return selectedRank ? selectedRank.price : null;
+  }, [quickOrder.rankKey, rankOptions]);
+
+  const quickOrderPrice = useMemo(
+    () => getQuickOrderPrice(quickOrder, selectedRankPrice),
+    [quickOrder, selectedRankPrice],
+  );
   const filteredApplicants = useMemo(
     () =>
       applicants.filter(
@@ -288,13 +330,17 @@ export default function PlaymatePage() {
     [quickOrder.game, quickOrder.mode],
   );
   const overtimeFee = useMemo(() => getOvertimeFee(overtimeMinutes), [overtimeMinutes]);
-  const quickOrderCost = useMemo(
-    () =>
-      selectedQuickPlaymate
-        ? getPlaymateOrderCoins(selectedQuickPlaymate, quickOrder.minutes) + getLateFee(quickOrder.startTime)
-        : Math.ceil(quickOrderPrice.total),
-    [quickOrder.minutes, quickOrder.startTime, quickOrderPrice.total, selectedQuickPlaymate],
-  );
+
+
+  const quickOrderCost = useMemo(() => {
+    if (quickOrder.mode === "技术陪" && selectedRankPrice !== null) {
+      return Math.max(1, Math.ceil(selectedRankPrice * Math.max(1, Math.ceil(quickOrder.minutes / 30)))) + getLateFee(quickOrder.startTime);
+    }
+
+    return selectedQuickPlaymate
+      ? getPlaymateOrderCoins(selectedQuickPlaymate, quickOrder.minutes) + getLateFee(quickOrder.startTime)
+      : Math.ceil(quickOrderPrice.total);
+  }, [quickOrder.mode, quickOrder.minutes, quickOrder.startTime, quickOrderPrice.total, selectedQuickPlaymate, selectedRankPrice]);
   const bookingCost = useMemo(
     () => (bookingPlaymate ? getPlaymateOrderCoins(bookingPlaymate, bookingDuration) + getLateFee(bookingTime) : 0),
     [bookingDuration, bookingPlaymate, bookingTime],
@@ -368,7 +414,13 @@ export default function PlaymatePage() {
   }, [playmates, search, selectedGame]);
 
   const handleChange = <Key extends keyof FormState>(field: Key, value: FormState[Key]) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm((prev) => ({
+      ...prev,
+      [field]: value,
+      ...(field === "role" && value !== "段位"
+        ? { ranks: [], newRankName: "", newRankPrice: "", newRankDescription: "" }
+        : {}),
+    }));
   };
 
   const openCreateModal = () => {
@@ -406,7 +458,11 @@ export default function PlaymatePage() {
     field: Key,
     value: QuickOrderState[Key],
   ) => {
-    setQuickOrder((prev) => ({ ...prev, [field]: value }));
+    setQuickOrder((prev) => ({
+      ...prev,
+      [field]: value,
+      ...(field === "mode" && value !== "技术陪" ? { rankKey: "" } : {}),
+    }));
   };
 
   const submitQuickOrder = () => {
@@ -417,6 +473,11 @@ export default function PlaymatePage() {
 
     if (!quickOrder.game || !quickOrder.minutes || !quickOrder.startTime) {
       setQuickOrderMessage("请先填写游戏、分钟和开始时间。");
+      return;
+    }
+
+    if (quickOrder.mode === "技术陪" && !quickOrder.rankKey) {
+      setQuickOrderMessage("请选择段位价格后继续下单。");
       return;
     }
 
@@ -471,7 +532,10 @@ export default function PlaymatePage() {
   const chooseQuickPlaymate = (playmate: Playmate) => {
     setSelectedQuickPlaymate(playmate);
     setOrderStage("付款");
-    setQuickOrderMessage(`已选择 ${playmate.name}，本单需要 ${getPlaymateOrderCoins(playmate, quickOrder.minutes) + getLateFee(quickOrder.startTime)} 金币。`);
+    const baseCost = quickOrder.mode === "技术陪" && selectedRankPrice !== null
+      ? Math.max(1, Math.ceil(selectedRankPrice * Math.max(1, Math.ceil(quickOrder.minutes / 30))))
+      : getPlaymateOrderCoins(playmate, quickOrder.minutes);
+    setQuickOrderMessage(`已选择 ${playmate.name}，本单需要 ${baseCost + getLateFee(quickOrder.startTime)} 金币。`);
   };
 
   const chooseApplicant = (applicant: Applicant) => {
@@ -556,6 +620,13 @@ export default function PlaymatePage() {
       role: playmate.role ?? "娱乐陪玩",
       description: playmate.description,
       image: playmate.image ?? "",
+      ranks: (playmate.ranks ?? []).map((rank) => ({
+        ...rank,
+        key: `${rank.name}__${rank.price}__${rank.description ?? ""}`,
+      })),
+      newRankName: "",
+      newRankPrice: "",
+      newRankDescription: "",
     });
     setModalMessage(null);
     setIsModalOpen(true);
@@ -614,11 +685,54 @@ export default function PlaymatePage() {
     }
   };
 
+  const addRankOption = () => {
+    const name = form.newRankName.trim();
+    const price = Number(form.newRankPrice);
+    const description = form.newRankDescription.trim();
+
+    if (!name) {
+      setModalMessage("请输入段位名。");
+      return;
+    }
+    if (!Number.isInteger(price) || price <= 0) {
+      setModalMessage("段位价格请输入大于 0 的整数。");
+      return;
+    }
+
+    const newRank: RankOption = {
+      key: `${name}__${price}__${description}`,
+      name,
+      price,
+      description: description || undefined,
+    };
+
+    setForm((prev) => ({
+      ...prev,
+      ranks: [...prev.ranks, newRank].sort((a, b) => a.price - b.price || a.name.localeCompare(b.name)),
+      newRankName: "",
+      newRankPrice: "",
+      newRankDescription: "",
+    }));
+    setModalMessage(null);
+  };
+
+  const removeRankOption = (key: string) => {
+    setForm((prev) => ({
+      ...prev,
+      ranks: prev.ranks.filter((rank) => rank.key !== key),
+    }));
+  };
+
   const handleSubmit = async (event?: React.FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
 
     if (!form.name.trim() || !form.game.trim() || !form.price || !form.description.trim()) {
       setModalMessage("请填写昵称、游戏、价格和简介。");
+      return;
+    }
+
+    if (form.role === "段位" && form.ranks.length === 0) {
+      setModalMessage("段位类型陪玩需要至少添加一个段位价格。");
       return;
     }
 
@@ -887,17 +1001,39 @@ export default function PlaymatePage() {
                   </select>
                 </label>
 
-                <label className="grid gap-2 md:col-span-2">
-                  <span className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
-                    备注
-                  </span>
-                  <textarea
-                    value={quickOrder.note}
-                    onChange={(event) => updateQuickOrder("note", event.target.value)}
-                    placeholder="例如：想轻松聊天、要会指挥、不要压力局"
-                    className="min-h-[104px] rounded-lg border border-zinc-700 bg-black px-5 py-4 text-white outline-none transition placeholder:text-zinc-500 focus:border-cyan-300"
-                  />
-                </label>
+                {quickOrder.mode === "技术陪" && rankOptions.length > 0 && (
+                  <>
+                    <label className="grid gap-2">
+                      <span className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
+                        段位选择
+                      </span>
+                      <select
+                        value={quickOrder.rankKey}
+                        onChange={(event) => updateQuickOrder("rankKey", event.target.value)}
+                        className={fieldClass}
+                      >
+                        <option value="">请选择段位...</option>
+                        {rankOptions.map((rank) => (
+                          <option key={rank.key} value={rank.key}>
+                            {rank.name} - {rank.price} 金币/局{rank.description ? ` (${rank.description})` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label className="grid gap-2">
+                      <span className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
+                        备注
+                      </span>
+                      <textarea
+                        value={quickOrder.note}
+                        onChange={(event) => updateQuickOrder("note", event.target.value)}
+                        placeholder="例如：想轻松聊天、要会指挥、不要压力局"
+                        className="min-h-[104px] rounded-lg border border-zinc-700 bg-black px-5 py-4 text-white outline-none transition placeholder:text-zinc-500 focus:border-cyan-300"
+                      />
+                    </label>
+                  </>
+                )}
               </div>
 
               <div className="rounded-lg border border-zinc-800 bg-black p-4">
@@ -1442,6 +1578,85 @@ export default function PlaymatePage() {
                   className="min-h-[126px] rounded-lg border border-zinc-700 bg-black px-5 py-4 text-white outline-none transition placeholder:text-zinc-500 focus:border-cyan-300"
                 />
               </label>
+
+              {form.role === "段位" && (
+                <div className="md:col-span-2 space-y-4 rounded-lg border border-cyan-300/20 bg-black p-4">
+                  <div className="grid gap-3 md:grid-cols-3">
+                    <label className="grid gap-2">
+                      <span className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
+                        段位名称
+                      </span>
+                      <input
+                        value={form.newRankName}
+                        onChange={(event) => handleChange("newRankName", event.target.value)}
+                        placeholder="例如：青铜"
+                        className={fieldClass}
+                      />
+                    </label>
+                    <label className="grid gap-2">
+                      <span className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
+                        价格
+                      </span>
+                      <input
+                        type="number"
+                        value={form.newRankPrice}
+                        onChange={(event) => handleChange("newRankPrice", event.target.value)}
+                        placeholder="例如：20"
+                        className={fieldClass}
+                      />
+                    </label>
+                    <label className="grid gap-2">
+                      <span className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
+                        描述
+                      </span>
+                      <input
+                        value={form.newRankDescription}
+                        onChange={(event) => handleChange("newRankDescription", event.target.value)}
+                        placeholder="例如：低阶入门"
+                        className={fieldClass}
+                      />
+                    </label>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addRankOption}
+                    className="w-full rounded-lg bg-white px-4 py-3 text-sm font-bold text-black transition hover:bg-cyan-200"
+                  >
+                    新增段位价格
+                  </button>
+
+                  {form.ranks.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-300">
+                        已添加段位价格
+                      </p>
+                      <div className="grid gap-2">
+                        {form.ranks.map((rank) => (
+                          <div key={rank.key ?? `${rank.name}-${rank.price}`}
+                            className="flex items-center justify-between gap-3 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-3 text-sm"
+                          >
+                            <div>
+                              <p className="font-semibold text-white">
+                                {rank.name} - {rank.price} 金币/局
+                              </p>
+                              {rank.description && (
+                                <p className="text-xs text-zinc-400">{rank.description}</p>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeRankOption(rank.key!)}
+                              className="rounded-lg border border-red-500/70 px-3 py-2 text-xs font-semibold text-red-300 transition hover:bg-red-500/10"
+                            >
+                              删除
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {modalMessage && (

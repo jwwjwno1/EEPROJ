@@ -29,6 +29,7 @@ model Playmate {
   role        String   @default("娱乐陪玩")
   description String
   image       String?
+  ranks       Json?
   discordId   String?  @unique
   coinBalance Int      @default(0)
   createdAt   DateTime @default(now())

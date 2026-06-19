@@ -46,7 +46,20 @@ export async function GET() {
       ADMIN_DISCORD_IDS.includes(session.user.discordId)
   );
 
-  const playmates = await prismaClient.playmate.findMany();
+  const playmates = await prismaClient.playmate.findMany({
+    select: {
+      id: true,
+      name: true,
+      game: true,
+      price: true,
+      role: true,
+      description: true,
+      image: true,
+      ranks: true,
+      discordId: true,
+      createdAt: true,
+    },
+  });
 
   return NextResponse.json(
     isAdmin
@@ -59,6 +72,7 @@ export async function GET() {
           role: playmate.role,
           description: playmate.description,
           image: playmate.image,
+          ranks: playmate.ranks ?? [],
           createdAt: playmate.createdAt,
         }))
   );
@@ -99,6 +113,19 @@ export async function POST(req: Request) {
   const role = String(body.role ?? "娱乐陪玩").trim();
   const image = String(body.image ?? "").trim();
   const discordId = String(body.discordId ?? "").trim();
+  const ranks = Array.isArray(body.ranks) ? body.ranks : [];
+
+  const isValidRank = (rank: unknown) => {
+    return (
+      rank &&
+      typeof rank === "object" &&
+      typeof (rank as any).name === "string" &&
+      (rank as any).name.trim().length > 0 &&
+      Number.isInteger((rank as any).price) &&
+      (rank as any).price > 0 &&
+      (typeof (rank as any).description === "undefined" || typeof (rank as any).description === "string")
+    );
+  };
 
   if (
     !name ||
@@ -106,7 +133,8 @@ export async function POST(req: Request) {
     !description ||
     !Number.isInteger(price) ||
     price <= 0 ||
-    !["技术陪玩", "娱乐陪玩"].includes(role)
+    !["技术陪玩", "娱乐陪玩", "段位"].includes(role) ||
+    !ranks.every(isValidRank)
   ) {
     return NextResponse.json(
       {
@@ -126,6 +154,7 @@ export async function POST(req: Request) {
         role,
         description,
         image: image || null,
+        ranks: ranks.length > 0 ? ranks : null,
         discordId: discordId || null,
       },
     });

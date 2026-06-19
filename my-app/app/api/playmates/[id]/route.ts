@@ -48,7 +48,7 @@ export async function PUT(req: Request) {
   }
 
   const body = await req.json();
-  const { name, game, price, role, description, image, discordId } = body;
+  const { name, game, price, role, description, image, discordId, ranks } = body;
   const id = Number(new URL(req.url).pathname.split("/").pop());
   const parsedName = String(name ?? "").trim();
   const parsedGame = String(game ?? "").trim();
@@ -56,6 +56,18 @@ export async function PUT(req: Request) {
   const parsedPrice = Number(price);
   const hasRole = Object.prototype.hasOwnProperty.call(body, "role");
   const parsedRole = String(role ?? "").trim();
+  const parsedRanks = Array.isArray(ranks) ? ranks : [];
+  const isValidRank = (rank: unknown) => {
+    return (
+      rank &&
+      typeof rank === "object" &&
+      typeof (rank as any).name === "string" &&
+      (rank as any).name.trim().length > 0 &&
+      Number.isInteger((rank as any).price) &&
+      (rank as any).price > 0 &&
+      (typeof (rank as any).description === "undefined" || typeof (rank as any).description === "string")
+    );
+  };
 
   if (
     !id ||
@@ -64,7 +76,8 @@ export async function PUT(req: Request) {
     !parsedDescription ||
     !Number.isInteger(parsedPrice) ||
     parsedPrice <= 0 ||
-    (hasRole && !["技术陪玩", "娱乐陪玩"].includes(parsedRole))
+    (hasRole && !["技术陪玩", "娱乐陪玩", "段位"].includes(parsedRole)) ||
+    !parsedRanks.every(isValidRank)
   ) {
     return NextResponse.json(
       { error: "请填写昵称、游戏、简介，并确认价格是大于 0 的整数。" },
@@ -78,6 +91,7 @@ export async function PUT(req: Request) {
     price: parsedPrice,
     description: parsedDescription,
     image: String(image ?? "").trim() || null,
+    ranks: parsedRanks.length > 0 ? parsedRanks : null,
     ...(hasRole ? { role: parsedRole } : {}),
     ...(Object.prototype.hasOwnProperty.call(body, "discordId")
       ? { discordId: String(discordId ?? "").trim() || null }
