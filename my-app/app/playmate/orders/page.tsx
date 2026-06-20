@@ -283,8 +283,7 @@ export default function PlaymateOrdersPage() {
                 <div className="mt-1 text-xl font-black text-emerald-200">{giftRevenue} 金币</div>
               </div>
             </div>
-          </section>
-        )}
+            <div className="mt-6 grid gap-2">
               {playmateAccount.transactions.slice(0, 6).map((transaction) => (
                 <div
                   key={transaction.id}
