@@ -120,13 +120,14 @@ const gameCards: GameCard[] = [
     name: "Apex Legends",
     image: "/image/Apex.jpg",
   },
+  { name: "Steam 其他游戲", image: "/image/steam照片.jpg" },
   { name: "代肝", image: "/image/代肝.png" },
   { name: "陪聊", image: "/image/陪聊.png" },
   { name: "唱歌", image: "/image/唱歌.png" },
   { name: "语音聊天", image: "/image/打字陪伴.png" },
 ];
 
-const gameOptions = ["Valorant", "CS2", "League of Legends", "Apex Legends", ...serviceCategories];
+const gameOptions = ["Valorant", "CS2", "League of Legends", "Apex Legends", "Steam 其他游戲", ...serviceCategories];
 const genderOptions: GenderPreference[] = ["随机", "男生", "女生"];
 const playmateRoleOptions: PlaymateRole[] = ["娱乐陪玩", "技术陪玩", "段位"];
 
@@ -279,6 +280,7 @@ export default function PlaymatePage() {
   const [bookingPlaymate, setBookingPlaymate] = useState<Playmate | null>(null);
   const [bookingTime, setBookingTime] = useState("");
   const [bookingDuration, setBookingDuration] = useState(30);
+  const showBookings = false;
   const [bookingMessage, setBookingMessage] = useState<string | null>(null);
   const [isBooking, setIsBooking] = useState(false);
   const [quickOrder, setQuickOrder] = useState<QuickOrderState>(initialQuickOrder);
@@ -854,6 +856,19 @@ export default function PlaymatePage() {
         <Navbar />
       </div>
 
+      <div className="pointer-events-none fixed right-4 bottom-8 z-50 hidden flex-col items-center gap-2 md:flex">
+        <a
+          href="#quick-order"
+          className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full bg-cyan-400/15 text-cyan-200 shadow-xl shadow-cyan-500/20 ring-1 ring-cyan-300/20 transition hover:bg-cyan-400/30"
+          aria-label="跳转到快速下单"
+        >
+          <span className="text-2xl leading-none animate-bounce">↓</span>
+        </a>
+        <span className="pointer-events-auto rounded-full bg-zinc-950/90 px-3 py-1 text-xs uppercase tracking-[0.18em] text-cyan-200 shadow-lg shadow-black/40">
+          快速下单
+        </span>
+      </div>
+
       <div className="relative z-10 mx-auto flex max-w-7xl flex-col px-6 pb-12 pt-[5vh] md:pt-[9vh]">
         <section className="contents">
           <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -868,7 +883,7 @@ export default function PlaymatePage() {
             </p>
           </div>
 
-          <div className="order-last mt-10 rounded-lg border border-cyan-300/40 bg-zinc-950/85 p-5 shadow-[0_0_42px_rgba(103,232,249,0.08)] backdrop-blur-md">
+          <div id="quick-order" className="order-last mt-10 rounded-lg border border-cyan-300/40 bg-zinc-950/85 p-5 shadow-[0_0_42px_rgba(103,232,249,0.08)] backdrop-blur-md">
             <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.16em] text-cyan-300">
@@ -1360,19 +1375,19 @@ export default function PlaymatePage() {
           )}
 
           {!isLoading && filteredPlaymates.length > 0 && (
-            <div className="grid gap-8 xl:grid-cols-2">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
               {filteredPlaymates.map((playmate) => (
                 <article
                   key={playmate.id}
                   className="group overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950/88 shadow-2xl shadow-black/40 backdrop-blur-md transition duration-200 hover:-translate-y-1 hover:border-cyan-300/70 hover:shadow-cyan-950/30"
                 >
-                  <div className="relative h-80 bg-zinc-900 text-zinc-500 md:h-[28rem]">
+                  <div className="relative h-56 bg-zinc-900 text-zinc-500 md:h-64">
                     {isValidImageSrc(playmate.image) ? (
                       <Image
                         src={playmate.image as string}
                         alt={playmate.name}
                         fill
-                        sizes="(min-width: 1280px) 620px, 100vw"
+                        sizes="(min-width: 1280px) 360px, 33vw"
                         quality={100}
                         unoptimized={playmate.image?.startsWith("http")}
                         className="object-cover transition duration-500 group-hover:scale-[1.03]"
@@ -1681,7 +1696,7 @@ export default function PlaymatePage() {
         </div>
       )}
 
-      {bookingPlaymate && (
+      {bookingPlaymate && showBookings && (
         <div
           className="fixed inset-0 z-[100] grid place-items-center bg-black/80 px-4 py-8 backdrop-blur-md"
         >

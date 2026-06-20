@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
 
 const coinPackages = [20, 50, 100, 200, 500];
@@ -16,6 +16,9 @@ export default function Navbar() {
   const [isRechargeOpen, setIsRechargeOpen] = useState(false);
   const [isPlaymate, setIsPlaymate] = useState(false);
   const [orderCounts, setOrderCounts] = useState({ mine: 0, playmate: 0 });
+  const [rechargePending, setRechargePending] = useState(0);
+  const prevOrderMineRef = useRef<number | null>(null);
+  const prevRechargeRef = useRef<number | null>(null);
   const [selectedRecharge, setSelectedRecharge] = useState<number | null>(null);
   const [transferName, setTransferName] = useState("");
   const [rechargeMessage, setRechargeMessage] = useState<string | null>(null);
@@ -81,6 +84,92 @@ export default function Navbar() {
       window.removeEventListener("ee-orders-updated", syncOrders);
     };
   }, [loadOrderCounts]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const playBeep = () => {
+      try {
+        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = "sine";
+        o.frequency.value = 880;
+        g.gain.value = 0.05;
+        o.connect(g);
+        g.connect(ctx.destination);
+        o.start();
+        setTimeout(() => {
+          o.stop();
+          ctx.close();
+        }, 300);
+      } catch {
+        // ignore
+      }
+    };
+
+    const notify = (title: string, body?: string) => {
+      try {
+        if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+          // eslint-disable-next-line no-new
+          new Notification(title, { body });
+        } else if (typeof Notification !== "undefined" && Notification.permission !== "denied") {
+          Notification.requestPermission().then((perm) => {
+            if (perm === "granted") {
+              // eslint-disable-next-line no-new
+              new Notification(title, { body });
+            }
+          });
+        }
+      } catch {
+        // ignore
+      }
+    };
+
+    const checkLoop = async () => {
+      try {
+        const res = await fetch("/api/appointment-counts", { cache: "no-store" });
+        const data = await res.json();
+
+        if (mounted && data && typeof data.mine === "number") {
+          setOrderCounts((prev) => ({ ...prev, mine: Number(data.mine ?? 0) }));
+
+          const currentMine = Number(data.mine ?? 0);
+          const previousMine = prevOrderMineRef.current;
+          if (previousMine !== null && currentMine > previousMine) {
+            playBeep();
+            notify("新订单", `你有 ${currentMine} 个未处理订单`);
+            window.dispatchEvent(new CustomEvent("ee-orders-updated"));
+          }
+          prevOrderMineRef.current = currentMine;
+        }
+
+        if (session?.user?.role === "admin") {
+          const r = await fetch("/api/recharge-requests", { cache: "no-store" });
+          const list = await r.json();
+          const pending = Array.isArray(list) ? list.filter((i) => i.status === "pending").length : 0;
+          setRechargePending(pending);
+
+          const previousPending = prevRechargeRef.current;
+          if (previousPending !== null && pending > previousPending) {
+            playBeep();
+            notify("新的充值验证", `有 ${pending} 个待审核充值申请`);
+          }
+          prevRechargeRef.current = pending;
+        }
+      } catch {
+        // ignore
+      }
+    };
+
+    void checkLoop();
+    const id = window.setInterval(() => void checkLoop(), 9000);
+
+    return () => {
+      mounted = false;
+      window.clearInterval(id);
+    };
+  }, [session]);
 
   useEffect(() => {
     let isMounted = true;
@@ -204,7 +293,16 @@ export default function Navbar() {
           {isPlaymate && <Link href="/playmate/coins">陪玩流水</Link>}
           <Link href="/contact">联系我们</Link>
           {isLoggedIn && <Link href="/profile">个人资料</Link>}
-          {session?.user?.role === "admin" && <Link href="/admin">Admin</Link>}
+          {session?.user?.role === "admin" && (
+            <Link href="/admin" className="relative inline-flex items-center gap-2">
+              Admin
+              {pathname !== "/admin" && rechargePending > 0 && (
+                <span className="grid min-h-5 min-w-5 place-items-center rounded-full bg-rose-400 px-1.5 text-xs font-black leading-none text-black">
+                  {rechargePending}
+                </span>
+              )}
+            </Link>
+          )}
           {session?.user?.role === "admin" && <Link href="/admin/coins">金币流水</Link>}
         </nav>
 

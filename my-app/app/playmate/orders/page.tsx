@@ -74,6 +74,24 @@ export default function PlaymateOrdersPage() {
   const [playmateAccount, setPlaymateAccount] = useState<PlaymateAccount | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [rejectReasons, setRejectReasons] = useState<Record<number, string>>({});
+
+  const acceptedAmount = orders.reduce(
+    (sum, o) => (o.status === "accepted" ? sum + Number(o.coinCost ?? 0) : sum),
+    0,
+  );
+  const totalRevenue = orders.reduce(
+    (sum, o) => (o.status === "completed" ? sum + Number(o.coinCost ?? 0) : sum),
+    0,
+  );
+  const giftRevenue = playmateAccount
+    ? playmateAccount.transactions.reduce((sum, t) => {
+        const note = (t.note ?? "").toLowerCase();
+        if (t.type === "gift" || note.includes("gift") || note.includes("礼物")) {
+          return sum + Math.max(0, Number(t.amount ?? 0));
+        }
+        return sum;
+      }, 0)
+    : 0;
   const [proofFiles, setProofFiles] = useState<Record<number, File | null>>({});
   const [uploadingOrderId, setUploadingOrderId] = useState<number | null>(null);
 
@@ -251,7 +269,22 @@ export default function PlaymateOrdersPage() {
                 {playmateAccount.coinBalance} 金币
               </p>
             </div>
-            <div className="mt-4 grid gap-2">
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-lg border border-zinc-800 bg-black px-4 py-3 text-sm text-zinc-300">
+                <div className="text-xs text-zinc-400">接单金额</div>
+                <div className="mt-1 text-xl font-black text-cyan-200">{acceptedAmount} 金币</div>
+              </div>
+              <div className="rounded-lg border border-zinc-800 bg-black px-4 py-3 text-sm text-zinc-300">
+                <div className="text-xs text-zinc-400">总收入</div>
+                <div className="mt-1 text-xl font-black text-yellow-200">{totalRevenue} 金币</div>
+              </div>
+              <div className="rounded-lg border border-zinc-800 bg-black px-4 py-3 text-sm text-zinc-300">
+                <div className="text-xs text-zinc-400">礼物收入</div>
+                <div className="mt-1 text-xl font-black text-emerald-200">{giftRevenue} 金币</div>
+              </div>
+            </div>
+          </section>
+        )}
               {playmateAccount.transactions.slice(0, 6).map((transaction) => (
                 <div
                   key={transaction.id}
