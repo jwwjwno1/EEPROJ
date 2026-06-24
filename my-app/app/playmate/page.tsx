@@ -128,7 +128,7 @@ const gameCards: GameCard[] = [
 ];
 
 const gameOptions = ["Valorant", "CS2", "League of Legends", "Apex Legends", "Steam 其他游戲", ...serviceCategories];
-const genderOptions: GenderPreference[] = ["随机", "男生", "女生"];
+const genderOptions: GenderPreference[] = ["随机"];
 const playmateRoleOptions: PlaymateRole[] = ["娱乐陪玩", "技术陪玩", "段位"];
 
 const applicants: Applicant[] = [
@@ -280,7 +280,7 @@ export default function PlaymatePage() {
   const [bookingPlaymate, setBookingPlaymate] = useState<Playmate | null>(null);
   const [bookingTime, setBookingTime] = useState("");
   const [bookingDuration, setBookingDuration] = useState(30);
-  const showBookings = false;
+  const [showBookings, setShowBookings] = useState(false);
   const [bookingMessage, setBookingMessage] = useState<string | null>(null);
   const [isBooking, setIsBooking] = useState(false);
   const [quickOrder, setQuickOrder] = useState<QuickOrderState>(initialQuickOrder);
@@ -454,6 +454,7 @@ export default function PlaymatePage() {
     setBookingTime("");
     setBookingDuration(30);
     setBookingMessage(null);
+    setShowBookings(true);
   };
 
   const updateQuickOrder = <Key extends keyof QuickOrderState>(
@@ -606,6 +607,7 @@ export default function PlaymatePage() {
     setBookingDuration(30);
     setBookingMessage(null);
     setIsBooking(false);
+    setShowBookings(false);
   };
 
   const handleEdit = (playmate: Playmate) => {
