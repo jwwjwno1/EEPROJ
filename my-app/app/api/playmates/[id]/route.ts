@@ -54,7 +54,7 @@ export async function PUT(req: Request) {
   const parsedName = String(name ?? "").trim();
   const parsedGame = String(game ?? "").trim();
   const parsedDescription = String(description ?? "").trim();
-  const parsedPrice = Number(price);
+  const parsedPrice = Number(price ?? 0);
   const hasRole = Object.prototype.hasOwnProperty.call(body, "role");
   const parsedRole = String(role ?? "").trim();
   const parsedRanks = Array.isArray(ranks) ? ranks : [];
@@ -70,15 +70,19 @@ export async function PUT(req: Request) {
     );
   };
 
+  const isValidPrice = Number.isInteger(parsedPrice) && parsedPrice >= 0;
+  const isValidRole = !hasRole || ["技术陪玩", "娱乐陪玩", "段位"].includes(parsedRole);
+
   if (
     !id ||
     !parsedName ||
     !parsedGame ||
     !parsedDescription ||
-    !Number.isInteger(parsedPrice) ||
-    parsedPrice <= 0 ||
-    (hasRole && !["技术陪玩", "娱乐陪玩", "段位"].includes(parsedRole)) ||
-    !parsedRanks.every(isValidRank)
+    !isValidPrice ||
+    (hasRole && parsedRole !== "段位" && parsedPrice <= 0) ||
+    !isValidRole ||
+    !parsedRanks.every(isValidRank) ||
+    (hasRole && parsedRole === "段位" && parsedRanks.length === 0)
   ) {
     return NextResponse.json(
       { error: "请填写昵称、游戏、简介，并确认价格是大于 0 的整数。" },

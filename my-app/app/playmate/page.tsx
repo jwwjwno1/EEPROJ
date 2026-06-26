@@ -419,8 +419,10 @@ export default function PlaymatePage() {
     setForm((prev) => ({
       ...prev,
       [field]: value,
-      ...(field === "role" && value !== "段位"
-        ? { ranks: [], newRankName: "", newRankPrice: "", newRankDescription: "" }
+      ...(field === "role"
+        ? value === "段位"
+          ? { price: "" }
+          : { ranks: [], newRankName: "", newRankPrice: "", newRankDescription: "" }
         : {}),
     }));
   };
@@ -620,7 +622,7 @@ export default function PlaymatePage() {
     setForm({
       name: playmate.name,
       game: playmate.game,
-      price: String(playmate.price),
+      price: playmate.role === "段位" ? "" : String(playmate.price),
       role: playmate.role ?? "娱乐陪玩",
       description: playmate.description,
       image: playmate.image ?? "",
@@ -730,7 +732,7 @@ export default function PlaymatePage() {
   const handleSubmit = async (event?: React.FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
 
-    if (!form.name.trim() || !form.game.trim() || !form.price || !form.description.trim()) {
+    if (!form.name.trim() || !form.game.trim() || (form.role !== "段位" && !form.price) || !form.description.trim()) {
       setModalMessage("请填写昵称、游戏、价格和简介。");
       return;
     }
@@ -740,8 +742,8 @@ export default function PlaymatePage() {
       return;
     }
 
-    const price = Number(form.price);
-    if (!Number.isInteger(price) || price <= 0) {
+    const price = form.role === "段位" ? 0 : Number(form.price);
+    if (form.role !== "段位" && (!Number.isInteger(price) || price <= 0)) {
       setModalMessage("价格请输入大于 0 的整数。");
       return;
     }
@@ -1519,20 +1521,26 @@ export default function PlaymatePage() {
                 />
               </label>
 
-              <label className="grid gap-2">
-                <span className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
-                  价格
-                </span>
-                <input
-                  value={form.price}
-                  type="number"
-                  min="1"
-                  step="1"
-                  onChange={(event) => handleChange("price", event.target.value)}
-                  placeholder="例如：30"
-                  className={fieldClass}
-                />
-              </label>
+              {form.role !== "段位" ? (
+                <label className="grid gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
+                    价格
+                  </span>
+                  <input
+                    value={form.price}
+                    type="number"
+                    min="1"
+                    step="1"
+                    onChange={(event) => handleChange("price", event.target.value)}
+                    placeholder="例如：30"
+                    className={fieldClass}
+                  />
+                </label>
+              ) : (
+                <p className="text-xs text-zinc-500">
+                  段位类型陪玩无需填写默认价格，按下方段位价格列表收费。
+                </p>
+              )}
 
               <label className="grid gap-2">
                 <span className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">

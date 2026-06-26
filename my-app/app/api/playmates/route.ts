@@ -110,7 +110,7 @@ export async function POST(req: Request) {
   const name = String(body.name ?? "").trim();
   const game = String(body.game ?? "").trim();
   const description = String(body.description ?? "").trim();
-  const price = Number(body.price);
+  const price = Number(body.price ?? 0);
   const role = String(body.role ?? "娱乐陪玩").trim();
   const image = String(body.image ?? "").trim();
   const discordId = String(body.discordId ?? "").trim();
@@ -128,14 +128,19 @@ export async function POST(req: Request) {
     );
   };
 
+  const isValidPrice =
+    role === "段位"
+      ? Number.isInteger(price) && price >= 0
+      : Number.isInteger(price) && price > 0;
+
   if (
     !name ||
     !game ||
     !description ||
-    !Number.isInteger(price) ||
-    price <= 0 ||
+    !isValidPrice ||
     !["技术陪玩", "娱乐陪玩", "段位"].includes(role) ||
-    !ranks.every(isValidRank)
+    !ranks.every(isValidRank) ||
+    (role === "段位" && ranks.length === 0)
   ) {
     return NextResponse.json(
       {

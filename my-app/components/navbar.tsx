@@ -86,6 +86,30 @@ export default function Navbar() {
   }, [loadOrderCounts]);
 
   useEffect(() => {
+    if (!isLoggedIn || typeof Notification === "undefined") {
+      return;
+    }
+
+    const requestPermission = () => {
+      if (typeof Notification === "undefined" || Notification.permission !== "default") {
+        return;
+      }
+
+      Notification.requestPermission().catch(() => {
+        // ignore
+      });
+    };
+
+    if (Notification.permission === "default") {
+      window.addEventListener("click", requestPermission, { once: true });
+    }
+
+    return () => {
+      window.removeEventListener("click", requestPermission);
+    };
+  }, [isLoggedIn]);
+
+  useEffect(() => {
     let mounted = true;
 
     const playBeep = () => {
@@ -113,13 +137,6 @@ export default function Navbar() {
         if (typeof Notification !== "undefined" && Notification.permission === "granted") {
           // eslint-disable-next-line no-new
           new Notification(title, { body });
-        } else if (typeof Notification !== "undefined" && Notification.permission !== "denied") {
-          Notification.requestPermission().then((perm) => {
-            if (perm === "granted") {
-              // eslint-disable-next-line no-new
-              new Notification(title, { body });
-            }
-          });
         }
       } catch {
         // ignore
@@ -269,10 +286,9 @@ export default function Navbar() {
           <Link href="/playmate">陪玩大厅</Link>
           <Link href="/leaderboard">排行榜</Link>
           <Link href="/gifts">礼物中心</Link>
-          <Link href="/appointment">预约订单</Link>
           {isLoggedIn && (
             <Link href="/orders" className="relative inline-flex items-center gap-1.5">
-              你的订单
+              预约订单
               {pathname !== "/orders" && orderCounts.mine > 0 && (
                 <span className="grid min-h-5 min-w-5 place-items-center rounded-full bg-yellow-300 px-1.5 text-xs font-black leading-none text-black">
                   {orderCounts.mine}
